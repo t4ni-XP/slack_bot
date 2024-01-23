@@ -1,4 +1,4 @@
-const { App } = require('@slack/bolt');
+const { App, subtype } = require('@slack/bolt');
 
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
@@ -15,6 +15,17 @@ app.message('hello', async ({ message, say }) => {
   // イベントがトリガーされたチャンネルに say() でメッセージを送信します
   await say(`Hey there <@${message.user}>!`);
 });
+
+// app.event('file_shared', async({say}) => {
+//     await say('file uploaded');
+// });
+
+app.message(subtype('file_share'), async({message, say})=>{
+    //console.log(message);
+    console.log('file shared');
+    await say('file shared!!!');
+});
+
 
 (async () => {
   // アプリを起動します
