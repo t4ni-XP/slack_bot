@@ -16,16 +16,16 @@ app.message('hello', async ({ message, say }) => {
   await say(`Hey there <@${message.user}>!`);
 });
 
-// app.event('file_shared', async({say}) => {
-//     await say('file uploaded');
-// });
-
+// ファイルが添付されたメッセージが来たらレスポンスを返す
 app.message(subtype('file_share'), async({message, say})=>{
-    //console.log(message);
+    console.log(message);
     console.log('file shared');
     await say('file shared!!!');
 });
 
+function fileDownload(fileURL){
+    return;
+}
 
 (async () => {
   // アプリを起動します
