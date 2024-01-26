@@ -26,7 +26,7 @@ async function downloadFromSlack(downloadUrl, auth) {
 
       const filename = `sample_${DateTime.now().toFormat('yyyyMMddHHmmss')}.png`;
       fs.writeFileSync(filename, response.data, 'binary');
-      console.log(filename);
+      //console.log(filename);
 
       return filename;
   } catch (error) {
@@ -46,8 +46,10 @@ app.message(subtype('file_share'), async({message, say})=>{
   console.log("-------------");
   console.log('file shared');
   await say('file shared!!!');
-  const filename = downloadFromSlack(message.files[0].url_private_download,app.token);
-  console.log("filename:"+filename);
+  await downloadFromSlack(message.files[0].url_private_download,app.token).then(filename =>{
+    console.log(filename);
+  })
+  console.log("-------");
 });
 
 
