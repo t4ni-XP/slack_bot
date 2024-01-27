@@ -3,6 +3,7 @@ const axios = require('axios');
 const { log } = require('console');
 const fs = require('fs');
 const { DateTime } = require('luxon');
+// const { uploadBasic } = require('./googleDriveUpload');
 
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
@@ -35,6 +36,38 @@ async function downloadFromSlack(downloadUrl, auth) {
   }
 }
 
+async function uploadBasic(name,mimeType) {
+  const fs = require('fs');
+  const {GoogleAuth} = require('google-auth-library');
+  const {google} = require('googleapis');
+
+  // Get credentials and build service
+  // TODO (developer) - Use appropriate auth mechanism for your app
+  const auth = new GoogleAuth({
+    scopes: 'https://www.googleapis.com/auth/drive',
+  });
+  const service = google.drive({version: 'v3', auth});
+  const requestBody = {
+    name: name,
+    fields: 'id',
+  };
+  const media = {
+    mimeType: mimeType,
+    body: fs.createReadStream(name),
+  };
+  try {
+    const file = await service.files.create({
+      requestBody,
+      media: media,
+    });
+    console.log('File Id:', file.data.id);
+    return file.data.id;
+  } catch (err) {
+    // TODO(developer) - Handle error
+    throw err;
+  }
+}
+
 // "hello" を含むメッセージをリッスンします
 app.message('hello', async ({ message, say }) => {
   // イベントがトリガーされたチャンネルに say() でメッセージを送信します
@@ -48,6 +81,8 @@ app.message(subtype('file_share'), async({message, say})=>{
   await say('file shared!!!');
   await downloadFromSlack(message.files[0].url_private_download,app.token).then(filename =>{
     console.log(filename);
+    const datatype = 'image/' + filename.split('.')[-1]
+    uploadBasic(filename,datatype);
   })
   console.log("-------");
 });
