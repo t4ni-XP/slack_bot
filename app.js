@@ -37,17 +37,16 @@ async function downloadFromSlack(downloadUrl, auth) {
   }
 }
 
-async function getMessageFromSlack(channelId, auth, ts){
+async function getMessageFromSlack(channelId, auth){
   try {
-    const url = "https://slack.com/api/conversations.replies" 
+    const url = "https://slack.com/api/conversations.history" 
     const response = await axios.get(url,{
       headers: {
         Authorization: `Bearer ${auth}`,
       },
       responseType: 'json',
       params: {
-        channel: `${channelId}`,
-        ts: `${ts}`
+        channel: `${channelId}`
       }
     })
     return response;
@@ -75,7 +74,9 @@ app.message(subtype('file_share'), async({message, say})=>{
 });
 
 app.message('log', async ({ message, say })=> {
-  await getMessageFromSlack(message.channel, app.token, message.ts).then(res => {
+  console.log(message);
+  console.log("-----");
+  await getMessageFromSlack(message.channel, app.token).then(res => {
     console.log(res);
   })
   console.log("--------");
