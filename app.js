@@ -1,7 +1,8 @@
-const { App, subtype } = require('@slack/bolt');
+const { App, subtype, client } = require('@slack/bolt');
 const { rejects } = require('assert');
 const axios = require('axios');
 const { log } = require('console');
+const { channel } = require('diagnostics_channel');
 const fs = require('fs');
 const { DateTime } = require('luxon');
 const { resolve } = require('path');
@@ -39,17 +40,24 @@ async function downloadFromSlack(downloadUrl, auth) {
 
 async function getMessageFromSlack(channelId, auth){
   try {
-    const url = "https://slack.com/api/conversations.history" 
-    const response = await axios.get(url,{
-      headers: {
-        Authorization: `Bearer ${auth}`,
-      },
-      responseType: 'json',
-      params: {
-        channel: `${channelId}`
-      }
+    // const url = "https://slack.com/api/conversations.history" 
+    // const response = await axios.get(url,{
+    //   headers: {
+    //     Authorization: `Bearer ${auth}`,
+    //   },
+    //   responseType: 'json',
+    //   params: {
+    //     channel: `${channelId}`
+    //   }
+    // })
+    const res = await app.client.conversations.history({
+      token: auth,
+      channel: channelId
     })
-    return response;
+    console.log(res.messages);
+    // const conversationHistory = res.message;
+    // console.log(conversationHistory.length + " messages found in " + channelId);
+    return res;
   } catch (err){
     return err;
   }
@@ -77,7 +85,11 @@ app.message('log', async ({ message, say })=> {
   console.log(message);
   console.log("-----");
   await getMessageFromSlack(message.channel, app.token).then(res => {
+    console.log("success");
     console.log(res);
+  }).catch(err => {
+    console.log("error!!!");
+    console.log(err);
   })
   console.log("--------");
 });
