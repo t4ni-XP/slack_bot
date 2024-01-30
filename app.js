@@ -92,6 +92,17 @@ async function getMessageFromSlack(channelId, auth){
   }
 }
 
+async function searchOldImages(auth, query){
+  try {
+    const res = await app.client.search.files({
+      auth: auth,
+      query: query
+    })
+  } catch (err){
+    return err;
+  }
+}
+
 // "hello" を含むメッセージをリッスンします
 app.message('hello', async ({ message, say }) => {
   // イベントがトリガーされたチャンネルに say() でメッセージを送信します
