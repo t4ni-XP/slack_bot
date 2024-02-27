@@ -12,13 +12,14 @@ const app = new App({
   signingSecret: process.env.SLACK_SIGNING_SECRET,
   socketMode: true,
   appToken: process.env.SLACK_APP_TOKEN,
+  userToken: process.env.SLACK_USER_TOKEN,
   // ソケットモードではポートをリッスンしませんが、アプリを OAuth フローに対応させる場合、
   // 何らかのポートをリッスンする必要があります
   port: process.env.PORT || 3000
 });
 
 //ファイルをslackからダウンロードする関数
-async function downloadFromSlack(downloadUrl, auth) {
+async function downloadFromSlack(downloadUrl, auth, name) {
   try {
       const response = await axios.get(downloadUrl, {
           headers: {
@@ -27,7 +28,7 @@ async function downloadFromSlack(downloadUrl, auth) {
           responseType: 'arraybuffer',
       });
 
-      const filename = `sample_${DateTime.now().toFormat('yyyyMMddHHmmss')}.png`;
+      const filename = `${filename}.png`;
       fs.writeFileSync(filename, response.data, 'binary');
       //console.log(filename);
 
@@ -42,7 +43,9 @@ async function getMessageFromSlack(channelId, auth){
   try {
     const res = await app.client.conversations.history({
       token: auth,
-      channel: channelId
+      channel: channelId,
+      include_all_metadata: 1
+      // limit: 3
     })
     //console.log(res);
     // expected response
@@ -84,12 +87,25 @@ async function getMessageFromSlack(channelId, auth){
     //   }
     // }
     const conversationHistory = res.messages;
-    console.log(conversationHistory);
-    console.log("messageの数:"+conversationHistory.length);
-    return res;
+    // console.log(conversationHistory);
+    // console.log("messageの数:"+conversationHistory.length);
+    return conversationHistory;
   } catch (err){
     return err;
   }
+}
+
+async function searchOldFiles(json, auth){
+  // console.log(json);
+  // const messages = json.message;
+  // console.log(messages);
+  json.forEach((element) => {
+    if (element.files != null){
+      downloadFromSlack(element.files[0].url_private_download, auth, element.files[0].name).then(filename =>{
+        console.log(filename);
+      })
+    }
+  });
 }
 
 async function searchOldImages(auth, query){
@@ -98,6 +114,7 @@ async function searchOldImages(auth, query){
       auth: auth,
       query: query
     })
+    return res;
   } catch (err){
     return err;
   }
@@ -125,13 +142,14 @@ app.message('log', async ({ message, say })=> {
   // console.log(message);
   console.log("-----");
   await getMessageFromSlack(message.channel, app.token).then(res => {
-    console.log("success");
+    console.log("success channel:"+message.channel);
     // console.log(res);
   }).catch(err => {
     console.log("error!!!");
     console.log(err);
   })
   console.log("--------");
+  console.log(app.token);
 });
 
 (async () => {
@@ -139,4 +157,12 @@ app.message('log', async ({ message, say })=> {
   await app.start();
 
   console.log('⚡️ Bolt app is running!');
+  
+  await getMessageFromSlack("C06GKK51EJV", app.token).then(res => {
+    searchOldFiles(res, app.token);
+    console.log("success");
+  }).catch(err => {
+    console.log("error!!");
+  })
+
 })();
