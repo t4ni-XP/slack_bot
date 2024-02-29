@@ -27,10 +27,11 @@ async function downloadFromSlack(downloadUrl, auth, name) {
           },
           responseType: 'arraybuffer',
       });
+      console.log(response);
 
-      const filename = `${filename}.png`;
+      const filename = `${name}`;
       fs.writeFileSync(filename, response.data, 'binary');
-      //console.log(filename);
+      console.log(filename);
 
       return filename;
   } catch (error) {
@@ -96,29 +97,29 @@ async function getMessageFromSlack(channelId, auth){
 }
 
 async function searchOldFiles(json, auth){
-  // console.log(json);
-  // const messages = json.message;
-  // console.log(messages);
+  console.log(json);
+  const messages = json.message;
+  console.log(messages);
   json.forEach((element) => {
     if (element.files != null){
-      downloadFromSlack(element.files[0].url_private_download, auth, element.files[0].name).then(filename =>{
+      downloadFromSlack(element.files[0].url_private, auth, element.files[0].name).then(filename =>{
         console.log(filename);
       })
     }
   });
 }
 
-async function searchOldImages(auth, query){
-  try {
-    const res = await app.client.search.files({
-      auth: auth,
-      query: query
-    })
-    return res;
-  } catch (err){
-    return err;
-  }
-}
+// async function searchOldImages(auth, query){
+//   try {
+//     const res = await app.client.search.files({
+//       auth: auth,
+//       query: query
+//     })
+//     return res;
+//   } catch (err){
+//     return err;
+//   }
+// }
 
 // "hello" を含むメッセージをリッスンします
 app.message('hello', async ({ message, say }) => {
@@ -132,7 +133,7 @@ app.message(subtype('file_share'), async({message, say})=>{
   console.log("-------------");
   console.log('file shared');
   await say('file shared!!!');
-  await downloadFromSlack(message.files[0].url_private_download, app.token).then(filename =>{
+  await downloadFromSlack(message.files[0].url_private, app.token).then(filename =>{
     console.log(filename);
   })
   console.log("-------");
@@ -157,10 +158,10 @@ app.message('log', async ({ message, say })=> {
   await app.start();
 
   console.log('⚡️ Bolt app is running!');
-  
+  //slackの過去のメッセージを全取得→searchOldFilesに入れる
   await getMessageFromSlack("C06GKK51EJV", app.token).then(res => {
     searchOldFiles(res, app.token);
-    console.log("success");
+    //console.log("success");
   }).catch(err => {
     console.log("error!!");
   })
